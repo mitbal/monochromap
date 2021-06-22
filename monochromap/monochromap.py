@@ -222,9 +222,7 @@ class MonochroMap:
         self.background_color = background_color
 
         # features
-        self.markers = []
-        self.lines = []
-        self.polygons = []
+        self.features = []
 
         # fields that get set when map is rendered
         self.x_center = 0
@@ -232,6 +230,11 @@ class MonochroMap:
         self.zoom = 0
 
         self.delay_between_retries = delay_between_retries
+
+    def add_feature(self, feature):
+        """ add map feature, such as point, line, circle, or polygon
+        """
+        self.features.append(feature)
 
     def add_line(self, line):
         """
@@ -266,7 +269,7 @@ class MonochroMap:
         :rtype: Image.Image
         """
 
-        if not self.lines and not self.markers and not self.polygons and not (center and zoom):
+        if not self.features:
             raise RuntimeError("cannot render empty map, add lines / markers / polygons first")
 
         if zoom is None:
@@ -302,7 +305,10 @@ class MonochroMap:
         :return: extent (min_lon, min_lat, max_lon, max_lat)
         :rtype: tuple
         """
-        extents = [l.extent for l in self.lines]
+
+        extents = [f.extent for f in self.features]
+
+        extents += [l.extent for l in self.lines]
 
         for m in self.markers:
             e = (m.coord[0], m.coord[1])
@@ -459,75 +465,80 @@ class MonochroMap:
         """
         :type image: Image.Image
         """
-        # Pillow does not support anti aliasing for lines and circles
-        # There is a trick to draw them on an image that is twice the size and resize it at the end before it gets merged with  the base layer
+        
 
-        image_lines = Image.new('RGBA', (self.width * 2, self.height * 2), (255, 0, 0, 0))
-        draw = ImageDraw.Draw(image_lines)
+        draw = ImageDraw.Draw(image, 'RGBA')
 
-        for line in self.lines:
-            points = [(
-                self._x_to_px(_lon_to_x(coord[0], self.zoom)) * 2,
-                self._y_to_px(_lat_to_y(coord[1], self.zoom)) * 2,
-            ) for coord in line.coords]
+        print('Number of features', len(self.features))
 
-            if line.simplify:
-                points = _simplify(points)
+        # draw the feature on the order it is added
+        for feature in self.features:
 
-            for point in points:
-                # draw extra points to make the connection between lines look nice
+            print(isinstance(feature, Line))
+
+            if isinstance(feature, Polygon):
+                polygon = feature
+                points = [(
+                self._x_to_px(_lon_to_x(coord[0], self.zoom)),
+                self._y_to_px(_lat_to_y(coord[1], self.zoom)),
+
+                ) for coord in polygon.coords]
+                if polygon.simplify:
+                    points = _simplify(points)
+
+                if polygon.fill_color or polygon.outline_color:
+                    draw.polygon(points, fill=polygon.fill_color, outline=polygon.outline_color)
+
+            elif isinstance(feature, CircleMarker):
+                circle = feature
+                point = [
+                    self._x_to_px(_lon_to_x(circle.coord[0], self.zoom)),
+                    self._y_to_px(_lat_to_y(circle.coord[1], self.zoom))
+                ]
                 draw.ellipse((
-                    point[0] - line.width + 1,
-                    point[1] - line.width + 1,
-                    point[0] + line.width - 1,
-                    point[1] + line.width - 1
-                ), fill=line.color)
+                    point[0] - circle.width,
+                    point[1] - circle.width,
+                    point[0] + circle.width,
+                    point[1] + circle.width
+                ), fill=circle.color)
 
-            draw.line(points, fill=line.color, width=line.width * 2)
+            elif isinstance(feature, Line):
+                line = feature
+                points = [(
+                    self._x_to_px(_lon_to_x(coord[0], self.zoom)),
+                    self._y_to_px(_lat_to_y(coord[1], self.zoom)),
+                ) for coord in line.coords]
 
-        for circle in filter(lambda m: isinstance(m, CircleMarker), self.markers):
-            point = [
-                self._x_to_px(_lon_to_x(circle.coord[0], self.zoom)) * 2,
-                self._y_to_px(_lat_to_y(circle.coord[1], self.zoom)) * 2
-            ]
-            draw.ellipse((
-                point[0] - circle.width,
-                point[1] - circle.width,
-                point[0] + circle.width,
-                point[1] + circle.width
-            ), fill=circle.color)
+                print('line', points)
 
-        for polygon in self.polygons:
-            points = [(
-                self._x_to_px(_lon_to_x(coord[0], self.zoom)) * 2,
-                self._y_to_px(_lat_to_y(coord[1], self.zoom)) * 2,
+                if line.simplify:
+                    points = _simplify(points)
 
-            ) for coord in polygon.coords]
-            if polygon.simplify:
-                points = _simplify(points)
+                for point in points:
+                    # draw extra points to make the connection between lines look nice
+                    draw.ellipse((
+                        point[0] - line.width + 1,
+                        point[1] - line.width + 1,
+                        point[0] + line.width - 1,
+                        point[1] + line.width - 1
+                    ), fill=line.color)
 
-            if polygon.fill_color or polygon.outline_color:
-                draw.polygon(points, fill=polygon.fill_color, outline=polygon.outline_color)
+                draw.line(points, fill=line.color, width=line.width)
 
-        image_lines = image_lines.resize((self.width, self.height), Image.ANTIALIAS)
+            elif isinstance(feature, IconMarker):
+                icon = feature
+                position = (
+                    self._x_to_px(_lon_to_x(icon.coord[0], self.zoom)) - icon.offset[0],
+                    self._y_to_px(_lat_to_y(icon.coord[1], self.zoom)) - icon.offset[1]
+                )
 
-        # merge lines with base image
-        image.paste(image_lines, (0, 0), image_lines)
-
-        # add icon marker
-        for icon in filter(lambda m: isinstance(m, IconMarker), self.markers):
-            position = (
-                self._x_to_px(_lon_to_x(icon.coord[0], self.zoom)) - icon.offset[0],
-                self._y_to_px(_lat_to_y(icon.coord[1], self.zoom)) - icon.offset[1]
-            )
-
-            img = Image.open(icon.img_path, 'r')
-            image.paste(img, position, img)
-            img.close()
+                img = Image.open(icon.img_path, 'r')
+                image.paste(img, position, img)
+                img.close()
 
 
 if __name__ == '__main__':
-    map = MonochroMap(300, 400, 10)
+    map = MonochroMap()
     line = Line([(13.4, 52.5), (2.3, 48.9)], 'blue', 3)
     map.add_line(line)
     image = map.render()
