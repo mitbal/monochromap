@@ -1,7 +1,7 @@
-import itertools
 import time
-from concurrent.futures import ThreadPoolExecutor
+import itertools
 from io import BytesIO
+from concurrent.futures import ThreadPoolExecutor
 from math import sqrt, log, tan, pi, cos, ceil, floor, atan, sinh
 
 import requests
@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw
 class Line:
     def __init__(self, coords, color, width, simplify=True):
         """
-        Line that can be drawn in a static map
+        Represent one line object to be drawn
 
         :param coords: an iterable of lon-lat pairs, e.g. ((0.0, 0.0), (175.0, 0.0), (175.0, -85.1))
         :type coords: list
@@ -42,9 +42,11 @@ class Line:
         )
 
 
-class CircleMarker:
+class Point:
     def __init__(self, coord, color, width):
         """
+        Represent one point object to be drawn in the map
+
         :param coord: a lon-lat pair, eg (175.0, 0.0)
         :type coord: tuple
         :param color: color suitable for PIL / Pillow
@@ -60,10 +62,26 @@ class CircleMarker:
     def extent_px(self):
         return (self.width,) * 4
 
+    @property
+    def extent(self):
+        """
+        calculate the coordinates of the envelope / bounding box: (min_lon, min_lat, max_lon, max_lat)
+
+        :rtype: tuple
+        """
+        return (
+            self.coord[0],
+            self.coord[1],
+            self.coord[0],
+            self.coord[1],
+        )
+
 
 class IconMarker:
     def __init__(self, coord, file_path, offset_x, offset_y):
         """
+        Represent custom image object to be drawn into the map
+
         :param coord:  a lon-lat pair, eg (175.0, 0.0)
         :type coord: tuple
         :param file_path: path to icon
@@ -74,7 +92,6 @@ class IconMarker:
         :type offset_y: int
         """
         self.coord = coord
-        # self.img = Image.open(file_path, 'r')
         self.img_path = file_path
         self.offset = (offset_x, offset_y)
 
@@ -82,21 +99,30 @@ class IconMarker:
     def extent_px(self):
 
         img = Image.open(self.img_path, 'r')
-
         w, h = img.size
+        img.close()
+        
         return (
             self.offset[0],
             h - self.offset[1],
             w - self.offset[0],
             self.offset[1],
         )
+    
+    @property
+    def extent(self):
 
-        img.close()
+        return (
+            self.coord[0],
+            self.coord[1],
+            self.coord[0],
+            self.coord[1],
+        )
 
 
 class Polygon:
     """
-    Polygon that can be drawn on map
+    Represent one polygon object to be drawn into the map
 
     :param coords: an iterable of lon-lat pairs, e.g. ((0.0, 0.0), (175.0, 0.0), (175.0, -85.1))
     :type coords: list
@@ -236,27 +262,6 @@ class MonochroMap:
         """
         self.features.append(feature)
 
-    def add_line(self, line):
-        """
-        :param line: line to draw
-        :type line: Line
-        """
-        self.lines.append(line)
-
-    def add_marker(self, marker):
-        """
-        :param marker: marker to draw
-        :type marker: IconMarker or CircleMarker
-        """
-        self.markers.append(marker)
-
-    def add_polygon(self, polygon):
-        """
-        :param polygon: polygon to be drawn
-        :type polygon: Polygon
-        """
-        self.polygons.append(polygon)
-
     def render(self, zoom=None, center=None):
         """
         render static map with all map features that were added to map before
@@ -307,30 +312,6 @@ class MonochroMap:
         """
 
         extents = [f.extent for f in self.features]
-
-        extents += [l.extent for l in self.lines]
-
-        for m in self.markers:
-            e = (m.coord[0], m.coord[1])
-
-            if zoom is None:
-                extents.append(e * 2)
-                continue
-
-            # consider dimension of marker
-            e_px = m.extent_px
-
-            x = _lon_to_x(e[0], zoom)
-            y = _lat_to_y(e[1], zoom)
-
-            extents += [(
-                _x_to_lon(x - float(e_px[0]) / self.tile_size, zoom),
-                _y_to_lat(y + float(e_px[1]) / self.tile_size, zoom),
-                _x_to_lon(x + float(e_px[2]) / self.tile_size, zoom),
-                _y_to_lat(y - float(e_px[3]) / self.tile_size, zoom)
-            )]
-
-        extents += [p.extent for p in self.polygons]
 
         return (
             min(e[0] for e in extents),
@@ -465,36 +446,34 @@ class MonochroMap:
         """
         :type image: Image.Image
         """
-        
 
         draw = ImageDraw.Draw(image, 'RGBA')
-
-        print('Number of features', len(self.features))
 
         # draw the feature on the order it is added
         for feature in self.features:
 
-            print(isinstance(feature, Line))
-
             if isinstance(feature, Polygon):
+
                 polygon = feature
                 points = [(
-                self._x_to_px(_lon_to_x(coord[0], self.zoom)),
-                self._y_to_px(_lat_to_y(coord[1], self.zoom)),
-
+                    self._x_to_px(_lon_to_x(coord[0], self.zoom)),
+                    self._y_to_px(_lat_to_y(coord[1], self.zoom)),
                 ) for coord in polygon.coords]
+
                 if polygon.simplify:
                     points = _simplify(points)
 
                 if polygon.fill_color or polygon.outline_color:
                     draw.polygon(points, fill=polygon.fill_color, outline=polygon.outline_color)
 
-            elif isinstance(feature, CircleMarker):
+            elif isinstance(feature, Point):
+
                 circle = feature
                 point = [
                     self._x_to_px(_lon_to_x(circle.coord[0], self.zoom)),
                     self._y_to_px(_lat_to_y(circle.coord[1], self.zoom))
                 ]
+
                 draw.ellipse((
                     point[0] - circle.width,
                     point[1] - circle.width,
@@ -503,13 +482,12 @@ class MonochroMap:
                 ), fill=circle.color)
 
             elif isinstance(feature, Line):
+
                 line = feature
                 points = [(
                     self._x_to_px(_lon_to_x(coord[0], self.zoom)),
                     self._y_to_px(_lat_to_y(coord[1], self.zoom)),
                 ) for coord in line.coords]
-
-                print('line', points)
 
                 if line.simplify:
                     points = _simplify(points)
