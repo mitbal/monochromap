@@ -1,2 +1,2 @@
-from .monochromap import MonochroMap, CircleMarker, IconMarker, Line, Polygon
+from .monochromap import MonochroMap, Point, IconMarker, Line, Polygon
 
