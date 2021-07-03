@@ -1,14 +1,13 @@
 from distutils.core import setup
 
 setup(
-    name='staticmap',
-    packages=['staticmap'],
-    version='0.5.5',
-    description='A small, python-based library for creating map images with lines and markers.',
-    author='Christoph Lingg',
-    author_email='christoph@komoot.de',
-    url='https://github.com/komoot/staticmap',
-    download_url='https://github.com/komoot/staticmap/tarball/0.1',
+    name='monochromap',
+    packages=['monochromap'],
+    version='0.1.0',
+    description='A highly opinionated way to paint and plot black and white map',
+    author='M Iqbal Tawakal',
+    author_email='mit.iqi@gmail.com',
+    url='https://github.com/mitbal/monochromap',
     keywords='static map image osm',
     classifiers=[],
     install_requires=[
