@@ -5,7 +5,7 @@ A compact library to paint and plot black and white map. Inspired and continued 
 
 ## Example
 ### Draw Lines
-This example code will show the location of Laugh Tale from intersection of coordinates given by road poneglyph.
+This example code will show the location of Laugh Tale from intersection of coordinates given by 4 road poneglyphs.
 
 ```python
 m = MonochroMap()
