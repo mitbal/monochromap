@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 setup(
     name='monochromap',
     packages=['monochromap'],
-    version='0.1.0',
+    version='0.2.0',
     description='A highly opinionated way to paint and plot black and white map',
     long_description=long_description,
     long_description_content_type='text/markdown',
