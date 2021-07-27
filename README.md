@@ -24,10 +24,10 @@ m.add_feature(line)
 
 m.render()
 ```
-![laugh Tale location](/samples/laugh_tale.png?raw=true)
+![Europe](https://raw.githubusercontent.com/mitbal/monochromap/master/samples/laugh_tale.png "apparently one piece location is at Belgium and Luxembourg border, don't tell Luffy")
 
 ### Draw Points
-This example code will show the hotspot of California forest fire, don't ask why there is fire in the ocean, it's global warming.
+This example code will show the hotspot of California forest fire. Don't ask why there is fire in the ocean, it's global warming.
 ```python
 from monochromap import MonochroMap, Point
 
@@ -42,10 +42,10 @@ for i in range(1000):
 
 m.render()
 ```
-![Jakarta](/samples/california.png?raw=true)
+![California](https://raw.githubusercontent.com/mitbal/monochromap/master/samples/california.png "california forest fire")
 
 ### Draw (any) Polygon
-This example will show how to plot one instance of polygon, namely rectangle.
+This example will show how to plot one instance of polygon, namely rectangle. Other shape of polygon is left as an exercise for the reader.
 ```python
 from monochromap import MonochroMap, Polygon
 
@@ -68,7 +68,7 @@ m.add_feature(Polygon(points, '#0000ff44', 'black'))
 
 m.render()
 ```
-![Jakarta](/samples/jakarta_polygon.png?raw=true)
+![Jakarta](https://raw.githubusercontent.com/mitbal/monochromap/master/samples/jakarta_polygon.png "Jakarta is a city in Indonesia")
 
 ### Draw Icon (random image)
 You can also plot any random image into the map. Here we will show the total number of covid patient on the world most adept country at defeating pandemic, according to reputable source, Plague inc.
@@ -89,9 +89,4 @@ m.add_feature(icon)
 
 m.render()
 ```
-![Greenland](/samples/greenland.png?raw=true)
-
-### License
-StaticMap is open source and licensed under Apache License, Version 2.0
-
-The map samples on this page are made with [OSM](http://www.osm.org) data, © [OpenStreetMap](http://www.openstreetmap.org/copyright) contributors
+![Greenland](https://raw.githubusercontent.com/mitbal/monochromap/master/samples/greenland.png)
