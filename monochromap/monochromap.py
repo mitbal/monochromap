@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 
 
 class Line:
-    def __init__(self, coords, color, width, simplify=True):
+    def __init__(self, coords, color='#000000ff', width=10, simplify=True):
         """
         Represent one line object to be drawn
 
@@ -43,7 +43,7 @@ class Line:
 
 
 class Point:
-    def __init__(self, coord, color, width):
+    def __init__(self, coord, color='#ff0000ff', width=5):
         """
         Represent one point object to be drawn in the map
 
@@ -134,7 +134,7 @@ class Polygon:
     :type simplify: bool
     """
 
-    def __init__(self, coords, fill_color, outline_color, simplify=True):
+    def __init__(self, coords, fill_color='#00ff00ff', outline_color='#000000ff', simplify=True):
         self.coords = coords
         self.fill_color = fill_color
         self.outline_color = outline_color
