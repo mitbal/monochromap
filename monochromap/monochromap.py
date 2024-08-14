@@ -211,8 +211,8 @@ def _simplify(points, tolerance=11):
 
 
 class MonochroMap:
-    def __init__(self, width=800, height=600, padding_x=0, padding_y=0, url_template='http://a.tile.stamen.com/toner/{z}/{x}/{y}.png', 
-                tile_size=256, tile_request_timeout=None, headers=None, reverse_y=False, background_color='#fff', delay_between_retries=2):
+    def __init__(self, width=800, height=600, padding_x=0, padding_y=0, url_template='https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}.png?api_key={k}',
+                 api_key='', tile_size=256, tile_request_timeout=None, headers=None, reverse_y=False, background_color='#fff', delay_between_retries=2):
         """
         :param width: map width in pixel
         :type width: int
@@ -224,6 +224,8 @@ class MonochroMap:
         :type padding_y: int
         :param url_template: tile URL
         :type url_template: str
+        :param api_key: the api key to use stamen toner tile style that comes from provider (stadia)
+        :type api_key: str
         :param tile_size: the size of the map tiles in pixel
         :type tile_size: int
         :param tile_request_timeout: time in seconds to wait for requesting map tiles
@@ -241,6 +243,7 @@ class MonochroMap:
         self.height = height
         self.padding = (padding_x, padding_y)
         self.url_template = url_template
+        self.api_key = api_key
         self.headers = headers
         self.tile_size = tile_size
         self.request_timeout = tile_request_timeout
@@ -386,7 +389,7 @@ class MonochroMap:
                 if self.reverse_y:
                     tile_y = ((1 << self.zoom) - tile_y) - 1
 
-                url = self.url_template.format(z=self.zoom, x=tile_x, y=tile_y)
+                url = self.url_template.format(z=self.zoom, x=tile_x, y=tile_y, k=self.api_key)
                 tiles.append((x, y, url))
 
         thread_pool = ThreadPoolExecutor(4)
