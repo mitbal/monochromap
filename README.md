@@ -1,21 +1,27 @@
 # MonochroMap
 
-A compact library to paint and plot black and white map. Inspired and continued from [StaticMap](https://github.com/komoot/staticmap).
+Monochromap is a small library to plot geographical information on top of a black and white map. 
+Inspired and continued from [StaticMap](https://github.com/komoot/staticmap).
 
-Some of the modifications are:
+Major changes compare to the original package:
 - changed default tile to stamen toner
-- streamlined graphical component addition with only same function
+- streamlined graphical component addition using single function
 - supported graphical component alpha/transparency blending
-- fixed many iconmarker IO error in one image
+- fixed IO error if you plot many iconmarker object to the map
+
+**Update as of August 2024**
+The original stamen toner tile styles provider is shutting down (https://maps.stamen.com/) and move the data to Stadia Maps.
+To use this library then you need to create an account at https://stadiamaps.com/stamen, and generate API key as parameter.
 
 ## Example
 ### Draw Lines
 This example code will show the location of Laugh Tale from intersection of coordinates given by 4 road poneglyphs.
 
 ```python
+import os
 from monochromap import MonochroMap, Line
 
-m = MonochroMap()
+m = MonochroMap(api_key=os.environ['STADIA_API_KEY'])
 line = Line(((13.4, 52.5), (2.3, 48.9)), '#ff000088', 15)
 m.add_feature(line)
 
@@ -29,9 +35,10 @@ m.render()
 ### Draw Points
 This example code will show the hotspot of California forest fire. Don't ask why there is fire in the ocean, it's global warming.
 ```python
+import os
 from monochromap import MonochroMap, Point
 
-m = MonochroMap()
+m = MonochroMap(api_key=os.environ['STADIA_API_KEY'])
 for i in range(1000):
 
     lat = 36.7783 + rng.normal()
@@ -47,9 +54,10 @@ m.render()
 ### Draw (any) Polygon
 This example will show how to plot one instance of polygon, namely rectangle. Other shape of polygon is left as an exercise for the reader.
 ```python
+import os
 from monochromap import MonochroMap, Polygon
 
-m = MonochroMap()
+m = MonochroMap(api_key=os.environ['STADIA_API_KEY'])
 
 lon0, lat0 = (-6.114878, 106.731217)
 lon1, lat1 = (-6.311491, 106.951200)
@@ -74,9 +82,10 @@ m.render()
 You can also plot any random image into the map. Here we will show the total number of covid patient on the world most adept country at defeating pandemic, according to reputable source, Plague inc.
 
 ```python
+import os
 from monochromap import MonochroMap, IconMarker
 
-m = MonochroMap()
+m = MonochroMap(api_key=os.environ['STADIA_API_KEY'])
 lat, lon = (75.939847, -42.161182)
 
 for i in range(78):
