@@ -513,7 +513,7 @@ class MonochroMap:
                     self._y_to_px(_lat_to_y(icon.coord[1], self.zoom)) - icon.offset[1]
                 )
 
-                img = Image.open(icon.img_path, 'r')
+                img = Image.open(icon.img_path, 'r').convert('RGBA')
                 image.paste(img, position, img)
                 img.close()
 
